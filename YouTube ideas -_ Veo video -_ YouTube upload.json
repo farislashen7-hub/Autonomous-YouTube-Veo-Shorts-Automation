@@ -1,0 +1,2191 @@
+{
+  "name": "YouTube ideas -> Veo video -> YouTube upload",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1936,
+        -848
+      ],
+      "id": "12aa81e6-9a9a-42df-8a02-d323ee19609c",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "id": "632fdc7c-3153-4dd2-b961-039af24ade7f",
+      "name": "Daily 09:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -2656,
+        3408
+      ]
+    },
+    {
+      "parameters": {
+        "model": "qwen2.5:3b",
+        "options": {
+          "temperature": 0.5,
+          "numCtx": 8192
+        }
+      },
+      "id": "d6006808-fd0c-4d76-bf9e-8942ab1ac07f",
+      "name": "Model: Veo Prompt",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        -2032,
+        3648
+      ],
+      "credentials": {
+        "ollamaApi": {
+          "id": "H6TNxxQrQ4oURpwT",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "s1",
+                    "leftValue": "={{ $json.data.successFlag }}",
+                    "rightValue": 1,
+                    "operator": {
+                      "type": "number",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "done"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "s2",
+                    "leftValue": "={{ $json.data.successFlag }}",
+                    "rightValue": 2,
+                    "operator": {
+                      "type": "number",
+                      "operation": "gte"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "failed"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "s3",
+                    "leftValue": "={{ $json.data.successFlag }}",
+                    "rightValue": 0,
+                    "operator": {
+                      "type": "number",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "pending"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra",
+          "renameFallbackOutput": "unexpected"
+        }
+      },
+      "id": "236281fb-03ae-4553-b7c4-f5a9ddd68b99",
+      "name": "Status?",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -1008,
+        3408
+      ]
+    },
+    {
+      "parameters": {
+        "errorMessage": "={{ 'Veo failed or unexpected reply: ' + JSON.stringify($json.data ?? $json).slice(0, 500) }}"
+      },
+      "id": "36f1f592-a432-421a-849b-b7ad1130c8a6",
+      "name": "Fail: video",
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [
+        -688,
+        3696
+      ]
+    },
+    {
+      "parameters": {
+        "model": "qwen2.5:3b",
+        "options": {
+          "temperature": 0.3,
+          "numCtx": 8192
+        }
+      },
+      "id": "ef384882-501f-4ae4-884b-ce7c229dfd0e",
+      "name": "Model: SEO",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        -608,
+        3520
+      ],
+      "credentials": {
+        "ollamaApi": {
+          "id": "H6TNxxQrQ4oURpwT",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "qwen2.5:3b",
+        "options": {
+          "temperature": 0.1,
+          "numCtx": 8192
+        }
+      },
+      "id": "e8d14ae2-b249-4c15-8d75-d1443146a25a",
+      "name": "Model: Parser Fix",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        -368,
+        3696
+      ],
+      "credentials": {
+        "ollamaApi": {
+          "id": "H6TNxxQrQ4oURpwT",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Edit Fields1').first().json.videoUrl }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "id": "76b48c64-cbd9-4e43-a851-2c655c9f3dee",
+      "name": "Download Video",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        -176,
+        3264
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "HQsmWh2gohoJ4o4e",
+          "name": "Header Auth account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1SbSzk8UPK7cZPXMncFAONDT5iVhWVFdEJwVd_wxjMRM",
+          "mode": "list",
+          "cachedResultName": "YouTube ides",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1SbSzk8UPK7cZPXMncFAONDT5iVhWVFdEJwVd_wxjMRM/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1SbSzk8UPK7cZPXMncFAONDT5iVhWVFdEJwVd_wxjMRM/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "title": "={{ $('Limit1').first().json.title }}",
+            "status": "uploaded"
+          },
+          "matchingColumns": [
+            "title"
+          ],
+          "schema": [
+            {
+              "id": "title",
+              "displayName": "title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "id": "2033ae90-2ae3-43ec-9af2-dd23f2908942",
+      "name": "Sheet: Mark Uploaded",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        256,
+        3264
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "7s6zyWsVYAQQKqx3",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1SbSzk8UPK7cZPXMncFAONDT5iVhWVFdEJwVd_wxjMRM",
+          "mode": "list",
+          "cachedResultName": "YouTube ides",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1SbSzk8UPK7cZPXMncFAONDT5iVhWVFdEJwVd_wxjMRM/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1SbSzk8UPK7cZPXMncFAONDT5iVhWVFdEJwVd_wxjMRM/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "status",
+              "lookupValue": "approved"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a69128ae-82ba-4f1f-b118-fa2b896d01fb",
+      "name": "Get row(s) in sheet1",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -2432,
+        3408
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "7s6zyWsVYAQQKqx3",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "1eba38ac-a1f8-4f78-bc36-073e7a13517c",
+      "name": "Limit1",
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        -2208,
+        3408
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Title: {{ String($json.title ?? '').trim() }}\nHook: {{ String($json.hook ?? '').trim() }}\nAngle: {{ String($json.angle ?? '').trim() }}\nFormat: {{ String($json.format ?? '').trim() }}\nThumbnail idea: {{ String($json.thumbnail_idea ?? '').trim() }}\nTags: {{ String($json.tags ?? '').trim() }}",
+        "options": {
+          "systemMessage": "You turn ONE video idea (a spreadsheet row) into ONE cinematic ASMR text-to-video prompt for Google Veo 3: a colored-glass version of the idea's main subject being cut by a steel knife.\n\nRULES\n- Derive the subject from the idea (title, hook, angle, format, thumbnail idea, tags). Keep the original concept; never invent a different one. If the idea is abstract, translate it into one clear physical object that represents it.\n- Render the subject as a semi-transparent, glossy, photorealistic colored-glass object that keeps its recognizable shape and proportions, with realistic reflections and refractions.\n- Scene: single static close-up, dark walnut cutting board, subject centered, a large heavy steel knife entering from the frame edge, soft cinematic top-down light, minimal dark background. Only the hands holding the knife are visible.\n- The video starts immediately as the knife cuts. The cut is slow, smooth, controlled and physically believable. The glass must NOT explode or randomly shatter; it separates into clean, distinct pieces.\n- Sound: exactly four layers: (1) crisp steel-on-glass tap (sharpest, most prominent), (2) smooth slicing, (3) soft muted wooden thud, (4) delicate glass clink as a piece lands. No music, no voice, no other sound.\n- Camera: fixed, subtle focus shifts only, no shake.\n- Write in English. Never mention spreadsheet, Telegram, workflow, status, date, or AI.\n\nOUTPUT: return ONLY these labeled lines, nothing before or after:\nSubject: <detailed colored-glass description of the subject>\nSetting: Static close-up, soft top-down cinematic lighting, dark walnut cutting board, minimal dark background.\nAction: <the knife slowly and deliberately slices through the glass subject into cleanly separated pieces>\nStyle: Hyper-realistic cinematic ASMR, ultra-photorealistic glass reflections, refractions, transparency, detailed textures, physically believable motion.\nSound: Four layered ASMR sounds - (1) crisp metallic steel-on-glass tap, (2) smooth controlled slicing through glass, (3) soft wooden thud, (4) delicate glass clink as separated pieces land. The initial tap is sharp and dominant. No other sounds.\nCamera Motion: Fixed camera with subtle focus shifts during the cutting movement.\nComposition: Subject centered on the board, knife enters naturally from the frame edge, hands and knife slightly farther from the camera so the full motion stays visible.\nAmbiance: Absolute silence except for the cutting sounds.\nAspect Ratio: 9:16\nFraming: Close-up with the entire subject and full cutting motion visible without distortion.\nCut Integrity: Every cut fully separates into clean distinct pieces with no artifacts, warping, melting, duplication or partially attached fragments.\nContinuity: Perfect consistency of subject, color, glass, knife, board, lighting and camera before, during and after every cut. No AI glitches or morphing."
+        }
+      },
+      "id": "f6696f93-6d4a-4334-b25c-4eb25f89471f",
+      "name": "AI Agent2",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -1984,
+        3408
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000
+    },
+    {
+      "parameters": {
+        "amount": 45
+      },
+      "id": "f4b48259-0270-429c-abb0-c6276ee3915c",
+      "name": "Wait2",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -1456,
+        3408
+      ],
+      "webhookId": "bf82387e-8ee4-45e2-8eb3-e822c15eb641"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1",
+              "name": "videoUrl",
+              "value": "={{ $json.data.response.resultUrls[0] }}",
+              "type": "string"
+            },
+            {
+              "id": "a2",
+              "name": "title",
+              "value": "={{ String($('Limit1').first().json.title ?? '').trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "a3",
+              "name": "hook",
+              "value": "={{ String($('Limit1').first().json.hook ?? '').trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "a4",
+              "name": "angle",
+              "value": "={{ String($('Limit1').first().json.angle ?? '').trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "a5",
+              "name": "format",
+              "value": "={{ String($('Limit1').first().json.format ?? '').trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "a6",
+              "name": "tags",
+              "value": "={{ String($('Limit1').first().json.tags ?? '').trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "a7",
+              "name": "visual_prompt",
+              "value": "={{ $('AI Agent2').first().json.output }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "01f0cde0-d956-4b4c-bf4d-b4d47e3a4fad",
+      "name": "Edit Fields1",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        -768,
+        3264
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Title idea: {{ $json.title }}\nHook: {{ $json.hook }}\nAngle: {{ $json.angle }}\nFormat: {{ $json.format }}\nTags: {{ $json.tags }}\n\nVideo visual prompt:\n{{ $json.visual_prompt }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a YouTube SEO and growth specialist. Write the publishing metadata for a video.\nALL output (title, description, hashtags, tags) MUST be natural English only. Never output Arabic characters.\n\nINPUT: a concept (title idea, hook, angle, format, tags) and the video's visual prompt.\nThe VIDEO is what the visual prompt describes. The concept is only topic inspiration.\nTitle and description must accurately describe what the video really shows and sounds like. Never promise content the video does not contain.\n\nTITLE\n- Max 70 characters, one strong curiosity or satisfaction trigger.\n- Main keyword in the first 40 characters.\n- At most 1 emoji. No ALL CAPS. No misleading clickbait.\n\nDESCRIPTION\n- Line 1-2: the hook with the main keyword (shown before \"more\").\n- Then 2-3 short sentences on what the viewer sees and hears.\n- Then a one-line call to action.\n- Max 900 characters. No links, no fake timestamps, no keyword stuffing.\n\nHASHTAGS\n- 8 to 12, each starting with #, no spaces inside a tag, never more than 15.\n- 2 broad, 4-6 niche, 2 format/trend tags.\n- If format is \"short\", #Shorts must be first.\n\nTAGS\n- 10 to 15 plain keywords/phrases, no #, total under 450 characters.\n\nReturn ONLY a raw JSON object with exactly these 4 keys: \"title\", \"description\", \"hashtags\", \"tags\".\nDo not echo input keys. Do not wrap in markdown code fences."
+        }
+      },
+      "id": "91f8de59-69f6-4a78-bfd7-70c5b6b0f6aa",
+      "name": "AI Agent3",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -544,
+        3264
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"title\": {\n      \"type\": \"string\"\n    },\n    \"description\": {\n      \"type\": \"string\"\n    },\n    \"hashtags\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"string\"\n      }\n    },\n    \"tags\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"string\"\n      }\n    }\n  },\n  \"required\": [\n    \"title\",\n    \"description\",\n    \"hashtags\",\n    \"tags\"\n  ]\n}",
+        "autoFix": true
+      },
+      "id": "6e0e911c-9497-47c8-922f-799451e324bb",
+      "name": "Structured Output Parser1",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -368,
+        3520
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "video",
+        "operation": "upload",
+        "title": "={{ $('AI Agent3').first().json.output.title }}",
+        "regionCode": "EG",
+        "categoryId": "24",
+        "options": {
+          "description": "={{ $('AI Agent3').first().json.output.description + '\\n\\n' + $('AI Agent3').first().json.output.hashtags.join(' ') }}",
+          "privacyStatus": "private",
+          "tags": "={{ $('AI Agent3').first().json.output.tags.join(',') }}"
+        }
+      },
+      "id": "a6f33066-6da8-41db-891b-4cbff384e095",
+      "name": "Upload a video1",
+      "type": "n8n-nodes-base.youTube",
+      "typeVersion": 1,
+      "position": [
+        32,
+        3264
+      ],
+      "credentials": {
+        "youTubeOAuth2Api": {
+          "id": "FjOB09Ei6MIFmHkl",
+          "name": "YouTube account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.kie.ai/api/v1/veo/generate",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"prompt\": $json.output, \"model\": \"veo3_fast\", \"aspectRatio\": \"9:16\" } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        -1680,
+        3424
+      ],
+      "id": "898c2ea4-407b-43f8-a3fa-801b9fecada8",
+      "name": "crest video",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "HQsmWh2gohoJ4o4e",
+          "name": "Header Auth account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://api.kie.ai/api/v1/veo/record-info",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "taskId",
+              "value": "={{ $json.data.taskId }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        -1216,
+        3376
+      ],
+      "id": "c67f68d7-9e60-4b54-adb0-7da1da4bc473",
+      "name": "Check Video Status2",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "HQsmWh2gohoJ4o4e",
+          "name": "Header Auth account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "58486b67-274d-4666-9e02-5c461ec9488a",
+              "name": "niche",
+              "value": "Pixar 3D family comedy shorts|AI animated dad and kids funny|قصص أطفال ذكاء اصطناعي",
+              "type": "string"
+            },
+            {
+              "id": "24d390c7-76b9-4cc5-ba99-52f47eae5c96",
+              "name": "language",
+              "value": "ar",
+              "type": "string"
+            },
+            {
+              "id": "ad5d8bf8-0fec-4f74-b77b-cd6dbb6cc25a",
+              "name": "count",
+              "value": 3,
+              "type": "number"
+            },
+            {
+              "id": "c1f2a1de-0a5b-4d0e-9a11-2f6f0d6a7b01",
+              "name": "approve_score",
+              "value": 8,
+              "type": "number"
+            },
+            {
+              "id": "d1000000-0000-4000-8000-000000000001",
+              "name": "duration_sec",
+              "value": 30,
+              "type": "number"
+            },
+            {
+              "id": "d1000000-0000-4000-8000-000000000002",
+              "name": "reference_story",
+              "value": "Wordless Pixar-style 3D comedy, 30s. Night, dark bedroom. A dad lies in bed between his two toddlers (boy with messy brown hair, girl with hair bun and pink bow), all three secretly watching a phone under the blanket, faces lit by blue screen glow, giggling. Mom's footsteps approach: we see only her plaid pajama pants and slippers at the door. All three instantly freeze and fake sleep with exaggerated squeezed eyes and fists. Mom leaves. Dad opens one eye, peeks, smirks. They resume watching and burst into silent laughter. Ending loops back to the opening shot (trio under blanket, glowing phone). Formula: forbidden fun -> authority approaches -> instant fake-out -> authority leaves -> back to fun.",
+              "type": "string"
+            },
+            {
+              "id": "d1000000-0000-4000-8000-000000000003",
+              "name": "reference_style",
+              "value": "Pixar/Disney 3D render, oversized expressive eyes, extreme face close-ups, warm orange vs cool blue night lighting, phone-screen glow on faces, shallow depth of field, vertical 9:16, 24fps, ~3s per shot, 8-10 shots. No dialogue: only SFX (giggles, footsteps, door creak, blanket rustle) + light playful music.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "3df8cc3f-13c8-4b03-a381-6b1dfee2bfa4",
+      "name": "Config2",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1712,
+        -848
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://www.googleapis.com/youtube/v3/search",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "part",
+              "value": "snippet"
+            },
+            {
+              "name": "type",
+              "value": "video"
+            },
+            {
+              "name": "videoDuration",
+              "value": "short"
+            },
+            {
+              "name": "order",
+              "value": "viewCount"
+            },
+            {
+              "name": "maxResults",
+              "value": "15"
+            },
+            {
+              "name": "q",
+              "value": "={{ $('Config2').first().json.niche }}"
+            },
+            {
+              "name": "publishedAfter",
+              "value": "={{ $now.minus({days: 30}).toISO() }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "83d6e292-243d-42c3-a5ff-bba0ad111d99",
+      "name": "YouTube: Search Top Videos2",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1472,
+        -848
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "httpQueryAuth": {
+          "id": "sYvzryoyyU4ngxDd",
+          "name": "Query Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const cfg = $('Config2').first().json;\nconst items = $input.first().json.items || [];\nconst titles = items.map(v => v.snippet?.title).filter(Boolean);\nreturn [{ json: {\n  niche: cfg.niche,\n  language: cfg.language || 'ar',\n  count: cfg.count || 10,\n  duration_sec: cfg.duration_sec || 30,\n  reference_story: cfg.reference_story,\n  reference_style: cfg.reference_style,\n  titles\n} }];"
+      },
+      "id": "abf9237a-5e24-4a50-97b5-5456c65bca1a",
+      "name": "Extract Titles2",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1216,
+        -848
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Niche: {{ $json.niche }}\nTitle/hook language: {{ $json.language }}\nIdeas needed: {{ $json.count }}\nVideo length: {{ $json.duration_sec }} seconds\n\nREFERENCE VIDEO (copy its formula and style, NOT its plot)\nStory: {{ $json.reference_story }}\nStyle: {{ $json.reference_style }}\n\nTop-performing titles, last 30 days (for title patterns only):\n{{ $json.titles.join('\\n') }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are a short-form video strategist and animation director. Generate NEW ideas that keep the SAME formula as the REFERENCE VIDEO: wordless Pixar-style 3D family comedy, same characters (dad + toddler boy + toddler girl with pink bow, optional mom seen only partially), night/home setting allowed to vary, same lighting and camera language. Do NOT repeat the reference plot or any title. Each idea must run EXACTLY the given duration (30s): 8-10 scenes, ~3s each, t_start/t_end continuous from 0 to 30. Scene 1 = visual hook in first 3s. Include one comedic fake-out or twist mid-video. Last scene must loop back to scene 1. No dialogue: use sound field for SFX/music only. Scene 'visual' must be a ready prompt for an AI video generator (subject, action, camera, lighting). Also output one reusable style_prompt and characters description for consistency. Title <70 chars in the requested language. Score 1-10 viral potential, be strict. Return JSON only."
+            }
+          ]
+        }
+      },
+      "id": "de98d70a-087d-4229-870f-b597a3a12c55",
+      "name": "Generate Ideas2",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        -992,
+        -848
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000
+    },
+    {
+      "parameters": {
+        "options": {
+          "maxTokens": 8000,
+          "temperature": 0.8
+        }
+      },
+      "id": "1b7ba24d-6cea-4573-a15d-c2e8b74534e6",
+      "name": "OpenRouter Chat Model4",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        -1104,
+        -640
+      ],
+      "credentials": {
+        "openRouterApi": {
+          "id": "J6DCJowepdM13pJr",
+          "name": "OpenRouter account 4"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\"type\": \"object\", \"properties\": {\"ideas\": {\"type\": \"array\", \"items\": {\"type\": \"object\", \"properties\": {\"title\": {\"type\": \"string\"}, \"hook\": {\"type\": \"string\"}, \"angle\": {\"type\": \"string\"}, \"format\": {\"type\": \"string\"}, \"duration_sec\": {\"type\": \"number\"}, \"characters\": {\"type\": \"string\"}, \"style_prompt\": {\"type\": \"string\"}, \"scenes\": {\"type\": \"array\", \"items\": {\"type\": \"object\", \"properties\": {\"t_start\": {\"type\": \"number\"}, \"t_end\": {\"type\": \"number\"}, \"visual\": {\"type\": \"string\"}, \"camera\": {\"type\": \"string\"}, \"sound\": {\"type\": \"string\"}}, \"required\": [\"t_start\", \"t_end\", \"visual\"]}}, \"loop_ending\": {\"type\": \"string\"}, \"thumbnail_idea\": {\"type\": \"string\"}, \"tags\": {\"type\": \"array\", \"items\": {\"type\": \"string\"}}, \"score\": {\"type\": \"number\"}}, \"required\": [\"title\", \"hook\", \"scenes\", \"score\"]}}}, \"required\": [\"ideas\"]}"
+      },
+      "id": "d28acfb3-0edd-4f90-b6eb-8cfc84e8c5fa",
+      "name": "Parse Ideas JSON2",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        -896,
+        -624
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const cfg = $('Config2').first().json;\nconst ideas = $json.output?.ideas;\nif (!Array.isArray(ideas) || !ideas.length)\n  return [{ json: { ok: false, error: 'no_ideas', ideas: [] } }];\n\nconst D = Number(cfg.duration_sec) || 30;\nconst valid = ideas.filter(i => {\n  if (!Array.isArray(i.scenes) || i.scenes.length < 6 || i.scenes.length > 12) return false;\n  const end = Math.max(...i.scenes.map(s => Number(s.t_end) || 0));\n  return Math.abs(end - D) <= 2;\n});\nif (!valid.length)\n  return [{ json: { ok: false, error: 'no_valid_' + D + 's_ideas', ideas: [] } }];\n\nconst out = valid.map(i => ({\n  ...i,\n  format: 'short',\n  duration_sec: D,\n  angle: i.angle || '',\n  characters: i.characters || '',\n  style_prompt: i.style_prompt || '',\n  loop_ending: i.loop_ending || '',\n  thumbnail_idea: i.thumbnail_idea || '',\n  tags: Array.isArray(i.tags) ? i.tags : [],\n  scenes_text: i.scenes\n    .map(s => `[${s.t_start}-${s.t_end}s] ${s.visual} | CAM: ${s.camera || '-'} | SFX: ${s.sound || '-'}`)\n    .join('\\n'),\n  status: Number(i.score) >= cfg.approve_score ? 'approved' : 'new'\n}));\nreturn [{ json: { ok: true, ideas: out } }];"
+      },
+      "id": "b8928f2d-ffa3-4554-b2e1-70bd0a235f76",
+      "name": "Return2",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -640,
+        -848
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "576947c1-cdb5-417f-ba41-5e8a1d55eeb4",
+              "leftValue": "={{ $json.ok }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "7e2f90e5-dcf8-42c9-ab5e-5b22815f2a21",
+      "name": "OK?2",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -400,
+        -832
+      ]
+    },
+    {
+      "parameters": {
+        "errorMessage": "={{ 'Idea generation failed: ' + $json.error }}"
+      },
+      "id": "f7b8b0b5-2269-4bee-b9d2-ce15922a0bfb",
+      "name": "Fail: no ideas2",
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [
+        -144,
+        -608
+      ]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "ideas",
+        "options": {}
+      },
+      "id": "edfd1f14-9292-4176-adf7-3e7c1d2db0b0",
+      "name": "One Row Per Idea2",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -176,
+        -912
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1SbSzk8UPK7cZPXMncFAONDT5iVhWVFdEJwVd_wxjMRM",
+          "mode": "list",
+          "cachedResultName": "YouTube ides",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1SbSzk8UPK7cZPXMncFAONDT5iVhWVFdEJwVd_wxjMRM/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1SbSzk8UPK7cZPXMncFAONDT5iVhWVFdEJwVd_wxjMRM/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "title": "={{ $json.title }}",
+            "hook": "={{ $json.hook }}",
+            "angle": "={{ $json.angle }}",
+            "duration_sec": "={{ $json.duration_sec }}",
+            "style_prompt": "={{ $json.style_prompt }}",
+            "scenes": "={{ $json.scenes_text }}",
+            "loop_ending": "={{ $json.loop_ending }}",
+            "thumbnail_idea": "={{ $json.thumbnail_idea }}",
+            "tags": "={{ $json.tags.join(', ') }}",
+            "score": "={{ $json.score }}",
+            "status": "={{ $json.status }}",
+            "format ": "={{ $json.format }}",
+            "characters ": "={{ $json.characters }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "date ",
+              "displayName": "date ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "title",
+              "displayName": "title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "hook",
+              "displayName": "hook",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "angle",
+              "displayName": "angle",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "format ",
+              "displayName": "format ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "duration_sec",
+              "displayName": "duration_sec",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "characters ",
+              "displayName": "characters ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "style_prompt",
+              "displayName": "style_prompt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "scenes",
+              "displayName": "scenes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "loop_ending",
+              "displayName": "loop_ending",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "thumbnail_idea",
+              "displayName": "thumbnail_idea",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "tags",
+              "displayName": "tags",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "score",
+              "displayName": "score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "c90bfcda-4ae6-403f-96c5-cca327d35004",
+      "name": "Sheet: Append Idea2",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        64,
+        -912
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "7s6zyWsVYAQQKqx3",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const row = $input.first().json;\nconst SEGMENTS = 4;                    // Veo: first clip 8s + 7s per extension => 4 segments ~ 29s\nconst STARTS = [0, 8, 15, 22, 29];     // scene start-time buckets per segment\n\nconst scenes = [];\nfor (const line of String(row.scenes || '').split('\\n')) {\n  const m = line.trim().match(/^\\[\\s*([\\d.]+)\\s*-\\s*([\\d.]+)\\s*s?\\s*\\]\\s*(.*)$/i);\n  if (!m) continue;\n  const [visual, cam, sfx] = m[3].split(/\\s*\\|\\s*(?:CAM|SFX):\\s*/i);\n  scenes.push({ start: Number(m[1]), visual: (visual || '').trim(), cam: (cam || '').trim(), sfx: (sfx || '').trim() });\n}\nif (!scenes.length) throw new Error('scenes column empty or unparsable for: ' + row.title);\n\nconst base = `${row.style_prompt || ''} Characters (identical in every shot): ${row.characters || ''}. Vertical 9:16, 24fps. No dialogue, no on-screen text, no subtitles.`.trim();\n\nconst segments = [];\nfor (let i = 0; i < SEGMENTS; i++) {\n  const lo = STARTS[i];\n  const hi = i === SEGMENTS - 1 ? Infinity : STARTS[i + 1];\n  const b = scenes.filter(s => s.start >= lo && s.start < hi);\n  const beats = b.map(s => s.cam && s.cam !== '-' ? `${s.visual} (${s.cam})` : s.visual).join(' Then ');\n  const sfx = b.map(s => s.sfx).filter(x => x && x !== '-').join(', ');\n  const parts = [];\n  parts.push(i === 0 ? base : 'Continue the same scene seamlessly with the exact same characters, outfits, room and lighting. No dialogue, no text.');\n  parts.push(`Action in order: ${beats || 'continue the story naturally'}.`);\n  if (sfx) parts.push(`Sound: ${sfx}. Light playful music, no voice.`);\n  if (i === SEGMENTS - 1 && row.loop_ending) parts.push(`Final shot: ${row.loop_ending}`);\n  segments.push(parts.join(' '));\n}\n\nreturn [{ json: {\n  ...row,\n  segments,\n  segTotal: SEGMENTS,\n  seg: 1,\n  prevTaskId: null,\n  seed: Math.floor(10000 + Math.random() * 89999),\n  urls: []\n} }];"
+      },
+      "id": "8107a537-153f-4ba1-ae35-9e0ac047774b",
+      "name": "Build Segments",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2000,
+        -1824
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "00a858dc-2385-4820-bb0d-d4d8a055d005",
+      "name": "Segment Input",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -1776,
+        -1824
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.seg === 1 ? 'https://api.kie.ai/api/v1/veo/generate' : 'https://api.kie.ai/api/v1/veo/extend' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.seg === 1 ? { prompt: $json.segments[0], model: 'veo3_fast', aspect_ratio: '9:16', seeds: $json.seed, enableTranslation: true } : { taskId: $json.prevTaskId, prompt: $json.segments[$json.seg - 1] } }}",
+        "options": {}
+      },
+      "id": "83aff348-22bb-41c1-9bb2-fc2c87dadad8",
+      "name": "Veo Request",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        -1552,
+        -1824
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "HQsmWh2gohoJ4o4e",
+          "name": "Header Auth account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const req = $input.first().json;\nif (req.code !== 200 || !req.data?.taskId)\n  throw new Error('Veo request failed: ' + JSON.stringify(req).slice(0, 400));\nconst st = $('Segment Input').first().json;\nreturn [{ json: { ...st, taskId: req.data.taskId } }];"
+      },
+      "id": "df95ce0c-f88f-4843-869b-a4038feee6cf",
+      "name": "Carry State",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1328,
+        -1824
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const st = $('Carry State').last().json;\nconst url = $input.first().json.data?.response?.resultUrls?.[0];\nif (!url) throw new Error('No resultUrls in Veo reply: ' + JSON.stringify($input.first().json).slice(0, 400));\nconst urls = [...(st.urls || []), url];\nif (st.seg >= st.segTotal)\n  return [{ json: { ...st, urls, videoUrl: url, finished: true } }];\nreturn [{ json: { ...st, urls, seg: st.seg + 1, prevTaskId: st.taskId, finished: false } }];"
+      },
+      "id": "6a7a7b83-70c7-49c1-8b53-eb736aa5eaa5",
+      "name": "Advance",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -352,
+        -1968
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "f1",
+              "leftValue": "={{ $json.finished }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "89b002c0-f2c6-4ff5-8ffb-a41eca53093a",
+      "name": "All segments done?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -128,
+        -1968
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "id": "e4c9ca88-5b6b-4fbe-8546-10d868d67c13",
+      "name": "Daily 09:",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -2672,
+        -1824
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1SbSzk8UPK7cZPXMncFAONDT5iVhWVFdEJwVd_wxjMRM",
+          "mode": "list",
+          "cachedResultName": "YouTube ides",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1SbSzk8UPK7cZPXMncFAONDT5iVhWVFdEJwVd_wxjMRM/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1SbSzk8UPK7cZPXMncFAONDT5iVhWVFdEJwVd_wxjMRM/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "status",
+              "lookupValue": "approved"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "10e115b8-112b-47ed-a6e1-08330d638949",
+      "name": "Get row(s) in sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -2448,
+        -1824
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "7s6zyWsVYAQQKqx3",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "a748d2c3-52b8-4054-9791-d8a700144b39",
+      "name": "Limit",
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        -2224,
+        -1824
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 45
+      },
+      "id": "da653c31-366c-4cbc-b02d-a459cafe86b0",
+      "name": "Wait",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -1104,
+        -1824
+      ],
+      "webhookId": "bf82387e-8ee4-45e2-8eb3-e822c15eb641"
+    },
+    {
+      "parameters": {
+        "url": "https://api.kie.ai/api/v1/veo/record-info",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "taskId",
+              "value": "={{ $('Carry State').last().json.taskId }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "4d6fe5a8-2050-43b2-a9f8-88249d4ead27",
+      "name": "Check Video Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        -880,
+        -1824
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "HQsmWh2gohoJ4o4e",
+          "name": "Header Auth account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "s1",
+                    "leftValue": "={{ $json.data.successFlag }}",
+                    "rightValue": 1,
+                    "operator": {
+                      "type": "number",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "done"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "s2",
+                    "leftValue": "={{ $json.data.successFlag }}",
+                    "rightValue": 2,
+                    "operator": {
+                      "type": "number",
+                      "operation": "gte"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "failed"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "s3",
+                    "leftValue": "={{ $json.data.successFlag }}",
+                    "rightValue": 0,
+                    "operator": {
+                      "type": "number",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "pending"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra",
+          "renameFallbackOutput": "unexpected"
+        }
+      },
+      "id": "384edf27-b204-4a1c-bef4-f5664bca1c36",
+      "name": "Status?1",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -576,
+        -1824
+      ]
+    },
+    {
+      "parameters": {
+        "errorMessage": "={{ 'Veo failed or unexpected reply: ' + JSON.stringify($json.data ?? $json).slice(0, 500) }}"
+      },
+      "id": "47cf7505-fb4d-424a-b27a-bcb4bfc2be67",
+      "name": "Fail: video1",
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [
+        -352,
+        -1632
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1",
+              "name": "videoUrl",
+              "value": "={{ $json.videoUrl }}",
+              "type": "string"
+            },
+            {
+              "id": "a2",
+              "name": "title",
+              "value": "={{ String($('Limit').first().json.title ?? '').trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "a3",
+              "name": "hook",
+              "value": "={{ String($('Limit').first().json.hook ?? '').trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "a4",
+              "name": "angle",
+              "value": "={{ String($('Limit').first().json.angle ?? '').trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "a5",
+              "name": "format",
+              "value": "={{ String($('Limit').first().json.format ?? '').trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "a6",
+              "name": "tags",
+              "value": "={{ String($('Limit').first().json.tags ?? '').trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "a7",
+              "name": "visual_prompt",
+              "value": "={{ $('Build Segments').first().json.segments.join('\\n') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "da11e5d8-20d5-482b-83e1-2b5e56dce4ad",
+      "name": "Edit Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        96,
+        -2032
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Title idea: {{ $json.title }}\nHook: {{ $json.hook }}\nAngle: {{ $json.angle }}\nFormat: {{ $json.format }}\nTags: {{ $json.tags }}\n\nVideo visual prompt:\n{{ $json.visual_prompt }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a YouTube SEO and growth specialist. Write publishing metadata for a ~30 second vertical Short.\nLANGUAGE: title and description in clear Arabic suitable for an Egyptian audience. Hashtags and tags: mix Arabic and English.\n\nINPUT: a concept (title idea, hook, angle, format, tags) and the video's visual prompt.\nThe VIDEO is what the visual prompt describes: a wordless Pixar-style 3D family comedy. Never promise dialogue, tutorials or content the video does not contain. The concept is only topic inspiration.\n\nTITLE\n- Max 70 characters, one strong curiosity or humor trigger.\n- Main keyword in the first 40 characters.\n- At most 1 emoji. No misleading clickbait.\n\nDESCRIPTION\n- Line 1-2: the hook with the main keyword (shown before \"more\").\n- Then 2-3 short sentences on what the viewer sees and hears.\n- Then a one-line call to action.\n- Max 900 characters. No links, no fake timestamps, no keyword stuffing.\n\nHASHTAGS\n- 8 to 12, each starting with #, no spaces inside a tag, never more than 15.\n- If format is \"short\", #Shorts must be first.\n\nTAGS\n- 10 to 15 plain keywords/phrases, no #, total under 450 characters.\n\nReturn ONLY a raw JSON object with exactly these 4 keys: \"title\", \"description\", \"hashtags\", \"tags\".\nDo not echo input keys. Do not wrap in markdown code fences."
+        }
+      },
+      "id": "b39456df-5c38-4641-a4ee-9bc2db26b02e",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        320,
+        -2032
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000
+    },
+    {
+      "parameters": {
+        "model": "qwen2.5:3b",
+        "options": {
+          "temperature": 0.3,
+          "numCtx": 8192
+        }
+      },
+      "id": "bd2f7c85-da9a-42dc-b358-5c836cc31096",
+      "name": "Model: SEO1",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        256,
+        -1792
+      ],
+      "credentials": {
+        "ollamaApi": {
+          "id": "H6TNxxQrQ4oURpwT",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "qwen2.5:3b",
+        "options": {
+          "temperature": 0.1,
+          "numCtx": 8192
+        }
+      },
+      "id": "46424505-fe07-49e5-bba1-da3bd4280140",
+      "name": "Model: Parser Fix1",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        496,
+        -1792
+      ],
+      "credentials": {
+        "ollamaApi": {
+          "id": "H6TNxxQrQ4oURpwT",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"title\": {\n      \"type\": \"string\"\n    },\n    \"description\": {\n      \"type\": \"string\"\n    },\n    \"hashtags\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"string\"\n      }\n    },\n    \"tags\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"string\"\n      }\n    }\n  },\n  \"required\": [\n    \"title\",\n    \"description\",\n    \"hashtags\",\n    \"tags\"\n  ]\n}",
+        "autoFix": true
+      },
+      "id": "d5b89d7b-4991-47a4-aed9-f1b825d17946",
+      "name": "Structured Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        416,
+        -1824
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Edit Fields').first().json.videoUrl }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "id": "700a1093-cb57-4658-8957-097918a91042",
+      "name": "Download Video1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        688,
+        -2032
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "resource": "video",
+        "operation": "upload",
+        "title": "={{ $('AI Agent').first().json.output.title }}",
+        "regionCode": "EG",
+        "categoryId": "24",
+        "options": {
+          "description": "={{ $('AI Agent').first().json.output.description + '\\n\\n' + $('AI Agent').first().json.output.hashtags.join(' ') }}",
+          "privacyStatus": "private",
+          "tags": "={{ $('AI Agent').first().json.output.tags.join(',') }}"
+        }
+      },
+      "id": "d7069c42-875b-4952-9ce7-7feac0ed570e",
+      "name": "Upload a video",
+      "type": "n8n-nodes-base.youTube",
+      "typeVersion": 1,
+      "position": [
+        912,
+        -2032
+      ],
+      "credentials": {
+        "youTubeOAuth2Api": {
+          "id": "FjOB09Ei6MIFmHkl",
+          "name": "YouTube account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1SbSzk8UPK7cZPXMncFAONDT5iVhWVFdEJwVd_wxjMRM",
+          "mode": "list",
+          "cachedResultName": "YouTube ides",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1SbSzk8UPK7cZPXMncFAONDT5iVhWVFdEJwVd_wxjMRM/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1SbSzk8UPK7cZPXMncFAONDT5iVhWVFdEJwVd_wxjMRM/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "title": "={{ $('Limit').first().json.title }}",
+            "status": "uploaded"
+          },
+          "matchingColumns": [
+            "title"
+          ],
+          "schema": [
+            {
+              "id": "title",
+              "displayName": "title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "id": "454ba4d9-6045-444f-ad4f-a2cc97134afa",
+      "name": "Sheet: Mark Uploaded1",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1136,
+        -2032
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "7s6zyWsVYAQQKqx3",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Config2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Daily 09:00": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Status?": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Fail: video",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Fail: video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Video": {
+      "main": [
+        [
+          {
+            "node": "Upload a video1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Model: Veo Prompt": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent2",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Model: SEO": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent3",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Model: Parser Fix": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Structured Output Parser1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet1": {
+      "main": [
+        [
+          {
+            "node": "Limit1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit1": {
+      "main": [
+        [
+          {
+            "node": "AI Agent2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent2": {
+      "main": [
+        [
+          {
+            "node": "crest video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait2": {
+      "main": [
+        [
+          {
+            "node": "Check Video Status2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "AI Agent3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent3": {
+      "main": [
+        [
+          {
+            "node": "Download Video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser1": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent3",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload a video1": {
+      "main": [
+        [
+          {
+            "node": "Sheet: Mark Uploaded",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "crest video": {
+      "main": [
+        [
+          {
+            "node": "Wait2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Video Status2": {
+      "main": [
+        [
+          {
+            "node": "Status?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config2": {
+      "main": [
+        [
+          {
+            "node": "YouTube: Search Top Videos2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "YouTube: Search Top Videos2": {
+      "main": [
+        [
+          {
+            "node": "Extract Titles2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Titles2": {
+      "main": [
+        [
+          {
+            "node": "Generate Ideas2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Ideas2": {
+      "main": [
+        [
+          {
+            "node": "Return2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model4": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Generate Ideas2",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Ideas JSON2": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Generate Ideas2",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Return2": {
+      "main": [
+        [
+          {
+            "node": "OK?2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OK?2": {
+      "main": [
+        [
+          {
+            "node": "One Row Per Idea2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Fail: no ideas2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "One Row Per Idea2": {
+      "main": [
+        [
+          {
+            "node": "Sheet: Append Idea2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Segments": {
+      "main": [
+        [
+          {
+            "node": "Segment Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Segment Input": {
+      "main": [
+        [
+          {
+            "node": "Veo Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Veo Request": {
+      "main": [
+        [
+          {
+            "node": "Carry State",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Carry State": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Advance": {
+      "main": [
+        [
+          {
+            "node": "All segments done?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "All segments done?": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Segment Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Daily 09:": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Limit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit": {
+      "main": [
+        [
+          {
+            "node": "Build Segments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Check Video Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Video Status": {
+      "main": [
+        [
+          {
+            "node": "Status?1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Status?1": {
+      "main": [
+        [
+          {
+            "node": "Advance",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Fail: video1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Fail: video1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Download Video1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Model: SEO1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Model: Parser Fix1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Structured Output Parser",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Video1": {
+      "main": [
+        [
+          {
+            "node": "Upload a video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload a video": {
+      "main": [
+        [
+          {
+            "node": "Sheet: Mark Uploaded1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true
+  },
+  "versionId": "c2ca189f-e6fc-40ea-837b-d01eb97c3907",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e448064a2bea8c01eef5d36e71683360b25462b06748f3d196874b097ba524f5"
+  },
+  "nodeGroups": [],
+  "id": "qsRyU4jKlw0RM7B6",
+  "tags": []
+}
